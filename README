@@ -1,12 +1,12 @@
-Bronto Python API Library 
+##Bronto Python API Library 
 
 ReadContact
 DeleteContact
 ContactList
 
 Setup
-Install required mofules
-create settings.ini file with token=YOUR API TOKEN
+Install required modules
+put your toke in an env variable. BRONTO_API_TOKEN
 run tests.py
 
 Required Modules
