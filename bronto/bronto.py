@@ -1,3 +1,5 @@
+import os
+
 from suds.client import Client
 from suds import WebFault
 
@@ -27,9 +29,11 @@ class Bronto(object):
     '''
         Base Bronto class, accepts only the api key as an init arg
     '''
-    def __init__(self,token):
+    def __init__(self):
         BRONTO_WSDL = 'https://api.bronto.com/v4?wsdl'
         self.api = Client(BRONTO_WSDL)
+        token = os.environ.get('BRONTO_API_TOKEN')
+
         try:
             self.session_id = self.api.service.login(token)
         except WebFault, e:
@@ -63,7 +67,12 @@ class Bronto(object):
     def getContact(self,email):
         filter = self.__buildContactFilter(email) 
         contact = self.api.service.readContacts(filter,includeLists=True)
-        return BrontoContact(contact[0])
+        try:
+            bronto_contact =  BrontoContact(contact[0])
+        except IndexError:
+            bronto_contact = None
+        return bronto_contact
+
 
     def getContacts(self,status=None,created=None,page=1):
         filter = self.api.factory.create('contactFilter')
@@ -78,6 +87,20 @@ class Bronto(object):
             contacts.append(BrontoContact(contact))
 
         return contacts
+
+    def getList(self, list_name, page=1):
+        filter = self.api.factory.create('mailListFilter')
+        filterType = self.api.factory.create('filterType')
+        filter.type = filterType.AND
+
+        stringValue = self.api.factory.create('stringValue')
+        stringValue.value = list_name
+        filterOperator = self.api.factory.create('filterOperator')
+        stringValue.operator = filterOperator.Contains
+        filter.name = stringValue
+
+        return BrontoList(self.api.service.readLists(filter, pageNumber=page)[0])
+
 
     def getLists(self,page=1):
         filter = self.api.factory.create('mailListFilter')
@@ -113,6 +136,17 @@ class BrontoContact(object):
             ## Clear out the id so if we save it adds not updates
             self.id = None 
         return self
+
+    def add_to_list(self, bronto, list_name):
+        bronto_list = bronto.getList(list_name)
+        
+        l = bronto.api.factory.create('mailListObject')
+        l.id = bronto_list.id
+
+        c = bronto.api.factory.create('contactObject')
+        c.id = self.id
+        
+        return bronto.api.service.addToList([l], [c])
 
     def save(self,bronto):
         ''' If it's a new contact create it otherwise update '''
