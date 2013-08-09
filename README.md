@@ -1,14 +1,14 @@
-##Bronto Python API Library 
+#Bronto Python API Library 
 
 ReadContact
 DeleteContact
 ContactList
 
-#Setup
+##Setup
 Install required modules
 put your toke in an env variable. BRONTO_API_TOKEN
 run tests.py
 
-#Required Modules
+##Required Modules
 - sudo pip install configobj
 - sudo pip install suds
